@@ -31,3 +31,20 @@ jobs:
 
       - name: Push Docker image (commit SHA tag)
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/portal-tfe:${{ github.sha }}
+
+      - name: Update values-main.yaml in deployment repo
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+          # Clonar el repositorio de despliegue
+          git clone https://github.com/TFE-javier-urones-devops/web-portal-deployment.git
+          cd web-portal-deployment
+
+          # Reemplazar el tag con el SHA actual del commit
+          sed -i 's/tag: .*/tag: "${{ github.sha }}"/' values-main.yaml
+
+          # Hacer commit y push
+          git add values-main.yaml
+          git commit -m "Actualiza tag de imagen a ${{ github.sha }}"
+          git push https://x-access-token:${{ secrets.TOKEN_DEPLOY }}@github.com/TFE-javier-urones-devops/web-portal-deployment.git HEAD:main
